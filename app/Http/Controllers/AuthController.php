@@ -8,6 +8,32 @@ use Inertia\Inertia;
 
 class AuthController extends Controller
 {
+    public function showRegister()
+    {
+        return Inertia::render('Auth/Register');
+    }
+
+    public function register(Request $request)
+    {
+        // 1. Validate incoming data
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+        // 2. Create the new user record in MySQL
+        $user = \App\Models\User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+        ]);
+        // 3. Log them in immediately and regenerate session for security
+        Auth::login($user);
+        $request->session()->regenerate();
+        // 4. Forward straight to the dashboard
+        return redirect()->intended('/dashboard');
+    }
+
     public function showLogin()
     {
         return Inertia::render('Auth/Login');
